@@ -16,18 +16,18 @@ The output is saved as an HTML file named `report_REPO-NAME_DATE_TIME.html`.
 CLI parameters:
 
 * `--repo` - Path to the git repository
-* `--filter` - Optional filter for file types (e.g., go, py, etc.)
-* `--mainbranch` - Optional name of the `main` branch for merge-base (default: `main`)
-
+* `--filter` - Filter for file types (e.g., go, py, etc.). Optional
+* `--mainbranch` - Name of the 'main' branch for merge-base (default "main")
+* `--groupby` -  Group git log date by 'week' or 'month' (default "month")
 
 ## Run with Go
 
 1. Install Go:
     - If you don't have Go installed, download and install it from [golang.org](https://golang.org/dl/)
 1. Clone the repository (or copy the code):
-1. Build the executable:
+1. Run the executable:
     ```bash
-    go run .
+    go run . --help
     ```
 
 ## Usage Example
@@ -38,6 +38,17 @@ To generate the HTML report, run the executable with the `--repo` flag specifyin
 go run . --repo /path/to/your/git/repository
 ```
 
+## Report Example
+
+Run options:
+```
+go run . --repo ../sourcecodesnippets --mainbranch master --filter *.yml
+```
+
+Screenshot:
+
+![alt text](docs/report-example-ui.png)
+
 ## License
 
-MIT
+[MIT](LICENSE)

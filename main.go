@@ -15,7 +15,8 @@ import (
 	"time"
 )
 
-var mainBranchName string = "main"
+var defaultMainBranchName string = "main"
+var defaultGroupByForLogDate string = "month"
 
 type UserContribution struct {
 	Email                string
@@ -32,6 +33,12 @@ type BranchReport struct {
 	Contributions map[string]*UserContribution
 }
 
+type ReportData struct {
+	RepoName      string
+	FileFilter    string
+	BranchReports map[string]*BranchReport
+}
+
 type customLogWriter struct {
 }
 
@@ -44,8 +51,9 @@ func main() {
 	log.SetOutput(new(customLogWriter))
 
 	repoPath := flag.String("repo", "", "Path to the git repository")
-	fileFilter := flag.String("filter", "", "Optional filter for file types (e.g., go, py, etc.)")
-	mainBranch := flag.String("mainbranch", "", fmt.Sprintf("Optional name of the `main` branch for merge-base (default: %s)", mainBranchName))
+	fileFilter := flag.String("filter", "", "Filter for file types (e.g., go, py, etc.). Optional")
+	optoinMainBranch := flag.String("mainbranch", defaultMainBranchName, "Name of the 'main' branch for merge-base")
+	optionGroupByForLogDate := flag.String("groupby", defaultGroupByForLogDate, "Group git log date by 'week' or 'month'")
 	flag.Parse()
 
 	if *repoPath == "" {
@@ -59,9 +67,18 @@ func main() {
 	repoName := filepath.Base(*repoPath)
 	log.Printf("Analyzing repository: %s", repoName)
 
-	if *mainBranch != "" {
-		mainBranchName = *mainBranch
-		log.Printf("Name of the main branch has been set to: %s", mainBranchName)
+	if *optoinMainBranch != "" {
+		defaultMainBranchName = *optoinMainBranch
+		log.Printf("Name of the main branch has been set to: %s", defaultMainBranchName)
+	}
+
+	if *optionGroupByForLogDate != "" {
+		if (*optionGroupByForLogDate != "week") && (*optionGroupByForLogDate != "month") {
+			log.Fatalf("Given option for parameter 'groupby' is not supported. Excepted 'week' or 'month'. Given: %s", *optionGroupByForLogDate)
+		}
+
+		defaultGroupByForLogDate = *optionGroupByForLogDate
+		log.Printf("Default group by option has been set to: %s", defaultGroupByForLogDate)
 	}
 
 	branchReports, err := analyzeGitHistoryByBranch(*repoPath, *fileFilter)
@@ -69,7 +86,7 @@ func main() {
 		log.Fatalf("Error analyzing git history: %v", err)
 	}
 
-	htmlReport, err := generateHTMLReportByBranch(branchReports)
+	htmlReport, err := generateHTMLReportByBranch(branchReports, repoName, *fileFilter)
 	if err != nil {
 		log.Fatalf("Error generating HTML report: %v", err)
 	}
@@ -104,8 +121,8 @@ func analyzeGitHistoryByBranch(repoPath string, fileFilter string) (map[string]*
 		logRange := branchName
 
 		// Get merge base to get stats from the branch only
-		if branchName != mainBranchName {
-			cmdMergeBase := exec.Command("git", "merge-base", mainBranchName, branchName)
+		if branchName != defaultMainBranchName {
+			cmdMergeBase := exec.Command("git", "merge-base", defaultMainBranchName, branchName)
 			cmdMergeBase.Dir = repoPath
 			outputMergeBase, err := cmdMergeBase.CombinedOutput()
 			if err != nil {
@@ -160,9 +177,14 @@ func analyzeGitHistoryByBranch(repoPath string, fileFilter string) (map[string]*
 
 					dateParsed, err := time.Parse("2006-01-02", currentDate)
 					if err == nil {
-						_, week := dateParsed.ISOWeek()
-						yearWeek := fmt.Sprintf("%d-%02d", dateParsed.Year(), week)
-						branchReports[branchName].Contributions[currentEmail].ContributionTimeline[yearWeek]++
+						//_, week := dateParsed.ISOWeek()
+						//yearWeek := fmt.Sprintf("%d-%02d", dateParsed.Year(), week)
+						//branchReports[branchName].Contributions[currentEmail].ContributionTimeline[yearWeek]++
+
+						//yearMonth := fmt.Sprintf("%d-%s", dateParsed.Year(), dateParsed.Month().String())
+						//branchReports[branchName].Contributions[currentEmail].ContributionTimeline[yearMonth]++
+						yearMonth := fmt.Sprintf("%d-%s", dateParsed.Year(), dateParsed.Month().String()[:3])
+						branchReports[branchName].Contributions[currentEmail].ContributionTimeline[strings.ToUpper(yearMonth)]++
 					}
 				}
 			} else if strings.Contains(line, "\t") && currentCommit != "" {
@@ -177,17 +199,25 @@ func analyzeGitHistoryByBranch(repoPath string, fileFilter string) (map[string]*
 			}
 		}
 	}
+
+	// Remove empty branch reports
+	for branchName, report := range branchReports {
+		if len(report.Contributions) == 0 {
+			delete(branchReports, branchName)
+		}
+	}
+
 	return branchReports, nil
 }
 
-func generateHTMLReportByBranch(branchReports map[string]*BranchReport) (string, error) {
+func generateHTMLReportByBranch(branchReports map[string]*BranchReport, repoName string, fileFilter string) (string, error) {
 	tmpl := `
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Git Contribution Report by Branch</title>
+<title>Git Contribution Report: {{.RepoName}}</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <style>
@@ -199,12 +229,16 @@ func generateHTMLReportByBranch(branchReports map[string]*BranchReport) (string,
 <body>
 
 <div class="container mt-4">
+
+<h4> Repository name: <span class="badge text-bg-success">{{.RepoName}}</span></h4>
+<h4> Applied file filter: <span class="badge text-bg-info">{{.FileFilter}}</span></h4>
+
 <div class="d-flex justify-content-end mb-3">
 	<button id="themeToggle" class="btn btn-outline-light">Light Theme</button>
 </div>
 
-{{range $branchName, $branchReport := .}}
-<h3> Branch: <span class="badge text-bg-warning">{{$branchName}}</span></h3>
+{{range $branchName, $branchReport := .BranchReports}}
+<h4> Branch: <span class="badge text-bg-warning">{{$branchName}}</span></h4>
 
 <table class="table table-dark table-striped">
 	<thead>
@@ -282,8 +316,14 @@ themeToggle.addEventListener('click', () => {
 		return "", err
 	}
 
+	data := ReportData{
+		RepoName:      repoName,
+		FileFilter:    fileFilter,
+		BranchReports: branchReports,
+	}
+
 	var buf bytes.Buffer
-	err = t.Execute(&buf, branchReports)
+	err = t.Execute(&buf, data)
 	if err != nil {
 		return "", err
 	}
