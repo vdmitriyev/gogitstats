@@ -15,6 +15,8 @@ import (
 	"time"
 )
 
+var mainBranchName string = "main"
+
 type UserContribution struct {
 	Email                string
 	CommitCount          int
@@ -42,7 +44,8 @@ func main() {
 	log.SetOutput(new(customLogWriter))
 
 	repoPath := flag.String("repo", "", "Path to the git repository")
-	fileFilter := flag.String("filefilter", "", "Optional file type (as extension) to filter by (e.g., go, py, etc.)")
+	fileFilter := flag.String("filter", "", "Optional filter for file types (e.g., go, py, etc.)")
+	mainBranch := flag.String("mainbranch", "", fmt.Sprintf("Optional name of the `main` branch for merge-base (default: %s)", mainBranchName))
 	flag.Parse()
 
 	if *repoPath == "" {
@@ -54,8 +57,12 @@ func main() {
 	}
 
 	repoName := filepath.Base(*repoPath)
-
 	log.Printf("Analyzing repository: %s", repoName)
+
+	if *mainBranch != "" {
+		mainBranchName = *mainBranch
+		log.Printf("Name of the main branch has been set to: %s", mainBranchName)
+	}
 
 	branchReports, err := analyzeGitHistoryByBranch(*repoPath, *fileFilter)
 	if err != nil {
@@ -88,9 +95,26 @@ func analyzeGitHistoryByBranch(repoPath string, fileFilter string) (map[string]*
 	branchReports := make(map[string]*BranchReport)
 
 	for _, branchName := range branchNames {
+
 		branchName = strings.TrimSpace(branchName)
 		if branchName == "" {
 			continue
+		}
+
+		logRange := branchName
+
+		// Get merge base to get stats from the branch only
+		if branchName != mainBranchName {
+			cmdMergeBase := exec.Command("git", "merge-base", mainBranchName, branchName)
+			cmdMergeBase.Dir = repoPath
+			outputMergeBase, err := cmdMergeBase.CombinedOutput()
+			if err != nil {
+				log.Printf("command 'git merge-base' for branch '%s' failed: %v; message: %s", branchName, err, outputMergeBase)
+				log.Printf("using default 'git log' range: %s", logRange)
+			} else {
+				mergeBase := strings.TrimSpace(string(outputMergeBase))
+				logRange = fmt.Sprintf("%s..%s", mergeBase, branchName)
+			}
 		}
 
 		branchReports[branchName] = &BranchReport{
@@ -101,8 +125,10 @@ func analyzeGitHistoryByBranch(repoPath string, fileFilter string) (map[string]*
 		cmdLog := exec.Command("git", "log", "--pretty=format:%ae,%ad,%H", "--date=short", "--numstat", branchName)
 		if fileFilter != "" {
 			log.Printf("Applying for branch '%s' filter: %s", branchName, fileFilter)
-			cmdLog = exec.Command("git", "log", "--pretty=format:%ae,%ad,%H", "--date=short", "--numstat", branchName, "--", fileFilter)
+			cmdLog = exec.Command("git", "log", "--pretty=format:%ae,%ad,%H", "--date=short", "--numstat", logRange, "--", fileFilter)
 		}
+
+		log.Printf("git cmd: %s", cmdLog)
 
 		cmdLog.Dir = repoPath
 		outputLog, err := cmdLog.CombinedOutput()

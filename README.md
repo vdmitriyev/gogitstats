@@ -16,7 +16,8 @@ The output is saved as an HTML file named `report_REPO-NAME_DATE_TIME.html`.
 CLI parameters:
 
 * `--repo` - Path to the git repository
-* `--filefilter` - Optional file type (as extension) to filter by (e.g., go, py, etc.)
+* `--filter` - Optional filter for file types (e.g., go, py, etc.)
+* `--mainbranch` - Optional name of the `main` branch for merge-base (default: `main`)
 
 
 ## Run with Go
