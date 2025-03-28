@@ -177,14 +177,16 @@ func analyzeGitHistoryByBranch(repoPath string, fileFilter string) (map[string]*
 
 					dateParsed, err := time.Parse("2006-01-02", currentDate)
 					if err == nil {
-						//_, week := dateParsed.ISOWeek()
-						//yearWeek := fmt.Sprintf("%d-%02d", dateParsed.Year(), week)
-						//branchReports[branchName].Contributions[currentEmail].ContributionTimeline[yearWeek]++
-
-						//yearMonth := fmt.Sprintf("%d-%s", dateParsed.Year(), dateParsed.Month().String())
-						//branchReports[branchName].Contributions[currentEmail].ContributionTimeline[yearMonth]++
-						yearMonth := fmt.Sprintf("%d-%s", dateParsed.Year(), dateParsed.Month().String()[:3])
-						branchReports[branchName].Contributions[currentEmail].ContributionTimeline[strings.ToUpper(yearMonth)]++
+						if defaultGroupByForLogDate == "month" {
+							//yearMonth := fmt.Sprintf("%d-%s", dateParsed.Year(), dateParsed.Month().String())
+							//branchReports[branchName].Contributions[currentEmail].ContributionTimeline[yearMonth]++
+							yearMonth := fmt.Sprintf("%d-%s", dateParsed.Year(), dateParsed.Month().String()[:3])
+							branchReports[branchName].Contributions[currentEmail].ContributionTimeline[strings.ToUpper(yearMonth)]++
+						} else {
+							_, week := dateParsed.ISOWeek()
+							yearWeek := fmt.Sprintf("%d-%02d", dateParsed.Year(), week)
+							branchReports[branchName].Contributions[currentEmail].ContributionTimeline[yearWeek]++
+						}
 					}
 				}
 			} else if strings.Contains(line, "\t") && currentCommit != "" {
