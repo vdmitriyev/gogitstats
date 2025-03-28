@@ -128,7 +128,7 @@ func analyzeGitHistoryByBranch(repoPath string, fileFilter string) (map[string]*
 			cmdLog = exec.Command("git", "log", "--pretty=format:%ae,%ad,%H", "--date=short", "--numstat", logRange, "--", fileFilter)
 		}
 
-		log.Printf("git cmd: %s", cmdLog)
+		//log.Printf("git cmd: %s", cmdLog)
 
 		cmdLog.Dir = repoPath
 		outputLog, err := cmdLog.CombinedOutput()
