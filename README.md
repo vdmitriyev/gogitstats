@@ -11,7 +11,13 @@ The report includes:
 
 The utility processes each branch in the repository and provides a separate table in the report for each branch. 
 The path to the Git repository is provided as a command-line argument. 
-The output is saved as an HTML file named `report_REPONAME_DATE_TIME.html`.
+The output is saved as an HTML file named `report_REPO-NAME_DATE_TIME.html`.
+
+CLI parameters:
+
+* `--repo` - Path to the git repository
+* `--filefilter` - Optional file type (as extension) to filter by (e.g., go, py, etc.)
+
 
 ## Run with Go
 

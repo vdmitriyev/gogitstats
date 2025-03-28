@@ -22,6 +22,7 @@ type UserContribution struct {
 	LinesAdded           int
 	LinesRemoved         int
 	LinesEdited          int
+	FileFilter           string
 }
 
 type BranchReport struct {
@@ -41,6 +42,7 @@ func main() {
 	log.SetOutput(new(customLogWriter))
 
 	repoPath := flag.String("repo", "", "Path to the git repository")
+	fileFilter := flag.String("filefilter", "", "Optional file type (as extension) to filter by (e.g., go, py, etc.)")
 	flag.Parse()
 
 	if *repoPath == "" {
@@ -55,7 +57,7 @@ func main() {
 
 	log.Printf("Analyzing repository: %s", repoName)
 
-	branchReports, err := analyzeGitHistoryByBranch(*repoPath)
+	branchReports, err := analyzeGitHistoryByBranch(*repoPath, *fileFilter)
 	if err != nil {
 		log.Fatalf("Error analyzing git history: %v", err)
 	}
@@ -74,7 +76,7 @@ func main() {
 	log.Printf("HTML report generated: %s\n", filename)
 }
 
-func analyzeGitHistoryByBranch(repoPath string) (map[string]*BranchReport, error) {
+func analyzeGitHistoryByBranch(repoPath string, fileFilter string) (map[string]*BranchReport, error) {
 	cmdBranches := exec.Command("git", "branch", "--format=%(refname:short)")
 	cmdBranches.Dir = repoPath
 	outputBranches, err := cmdBranches.CombinedOutput()
@@ -97,6 +99,11 @@ func analyzeGitHistoryByBranch(repoPath string) (map[string]*BranchReport, error
 		}
 
 		cmdLog := exec.Command("git", "log", "--pretty=format:%ae,%ad,%H", "--date=short", "--numstat", branchName)
+		if fileFilter != "" {
+			log.Printf("Applying for branch '%s' filter: %s", branchName, fileFilter)
+			cmdLog = exec.Command("git", "log", "--pretty=format:%ae,%ad,%H", "--date=short", "--numstat", branchName, "--", fileFilter)
+		}
+
 		cmdLog.Dir = repoPath
 		outputLog, err := cmdLog.CombinedOutput()
 		if err != nil {
@@ -120,6 +127,7 @@ func analyzeGitHistoryByBranch(repoPath string) (map[string]*BranchReport, error
 						branchReports[branchName].Contributions[currentEmail] = &UserContribution{
 							Email:                currentEmail,
 							ContributionTimeline: make(map[string]int),
+							FileFilter:           fileFilter,
 						}
 					}
 					branchReports[branchName].Contributions[currentEmail].CommitCount++
@@ -181,6 +189,7 @@ func generateHTMLReportByBranch(branchReports map[string]*BranchReport) (string,
 			<th>Lines Added</th>
 			<th>Lines Removed</th>
 			<th>Lines Edited</th>
+			<th>File Filter</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -196,6 +205,7 @@ func generateHTMLReportByBranch(branchReports map[string]*BranchReport) (string,
 			<td>{{.LinesAdded}}</td>
 			<td>{{.LinesRemoved}}</td>
 			<td>{{.LinesEdited}}</td>
+			<td>{{.FileFilter}}</td>
 		</tr>
 		{{end}}
 	</tbody>
