@@ -11,26 +11,14 @@ The report includes:
 
 The utility processes each branch in the repository and provides a separate table in the report for each branch. 
 The path to the Git repository is provided as a command-line argument. 
-The output is saved as an HTML file named `reports_DATETIME.html`.
+The output is saved as an HTML file named `report_REPONAME_DATE_TIME.html`.
 
-## Installation with Go
+## Run with Go
 
-1.  **Install Go:** If you don't have Go installed, download and install it from [golang.org](https://golang.org/dl/).
-2.  **Clone the repository (or copy the code):**
-
-    ```bash
-    git clone <your-repository-url> # If you have it in a repo
-    # or just create a main.go file and paste the code.
-    ```
-
-3.  **Navigate to the project directory:**
-
-    ```bash
-    cd <your-project-directory>
-    ```
-
-4.  **Build the executable:**
-
+1. Install Go:
+    - If you don't have Go installed, download and install it from [golang.org](https://golang.org/dl/)
+1. Clone the repository (or copy the code):
+1. Build the executable:
     ```bash
     go run .
     ```

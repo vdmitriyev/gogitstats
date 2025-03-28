@@ -52,6 +52,7 @@ func main() {
 	}
 
 	repoName := filepath.Base(*repoPath)
+
 	log.Printf("Analyzing repository: %s", repoName)
 
 	branchReports, err := analyzeGitHistoryByBranch(*repoPath)
@@ -157,7 +158,7 @@ func generateHTMLReportByBranch(branchReports map[string]*BranchReport) (string,
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <style>
 	.fixed-width {
-		width: 150px; /* Adjust as needed */
+		width: 150px;
 	}
 </style>
 </head>
