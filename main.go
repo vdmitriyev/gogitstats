@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -28,13 +29,30 @@ type BranchReport struct {
 	Contributions map[string]*UserContribution
 }
 
+type customLogWriter struct {
+}
+
+func (writer customLogWriter) Write(bytes []byte) (int, error) {
+	return fmt.Print(time.Now().UTC().Format("2006-01-02 15:04:05") + " " + string(bytes))
+}
+
 func main() {
+	log.SetFlags(0)
+	log.SetOutput(new(customLogWriter))
+
 	repoPath := flag.String("repo", "", "Path to the git repository")
 	flag.Parse()
 
 	if *repoPath == "" {
 		log.Fatal("Please provide the path to the git repository using --repo")
 	}
+
+	if _, err := os.Stat(*repoPath); os.IsNotExist(err) {
+		log.Fatalf("Repository path does not exist: %s", *repoPath)
+	}
+
+	repoName := filepath.Base(*repoPath)
+	log.Printf("Analyzing repository: %s", repoName)
 
 	branchReports, err := analyzeGitHistoryByBranch(*repoPath)
 	if err != nil {
@@ -46,13 +64,13 @@ func main() {
 		log.Fatalf("Error generating HTML report: %v", err)
 	}
 
-	filename := fmt.Sprintf("reports_%s.html", time.Now().Format("20060102150405"))
+	filename := fmt.Sprintf("report_%s_%s.html", repoName, time.Now().Format("2006-01-02_1504"))
 	err = os.WriteFile(filename, []byte(htmlReport), 0644)
 	if err != nil {
 		log.Fatalf("Error writing HTML report to file: %v", err)
 	}
 
-	fmt.Printf("HTML report generated: %s\n", filename)
+	log.Printf("HTML report generated: %s\n", filename)
 }
 
 func analyzeGitHistoryByBranch(repoPath string) (map[string]*BranchReport, error) {
@@ -130,55 +148,83 @@ func analyzeGitHistoryByBranch(repoPath string) (map[string]*BranchReport, error
 func generateHTMLReportByBranch(branchReports map[string]*BranchReport) (string, error) {
 	tmpl := `
 <!DOCTYPE html>
-<html>
+<html lang="en" data-bs-theme="dark">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Git Contribution Report by Branch</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <style>
-table {
-        border-collapse: collapse;
-        width: 100%;
-}
-th, td {
-        border: 1px solid #dddddd;
-        text-align: left;
-        padding: 8px;
-}
-tr:nth-child(even) {
-        background-color: #f2f2f2;
-}
+	.fixed-width {
+		width: 150px; /* Adjust as needed */
+	}
 </style>
 </head>
 <body>
 
-{{range $branchName, $branchReport := .}}
-<h2>Contribution Report for Branch: {{$branchName}}</h2>
+<div class="container mt-4">
+<div class="d-flex justify-content-end mb-3">
+	<button id="themeToggle" class="btn btn-outline-light">Light Theme</button>
+</div>
 
-<table>
-<tr>
-        <th>Email</th>
-        <th>Commit Count</th>
-        <th>Contribution Timeline</th>
-        <th>Lines Added</th>
-        <th>Lines Removed</th>
-        <th>Lines Edited</th>
-</tr>
-{{range sortContributions .Contributions}}
-<tr>
-        <td>{{.Email}}</td>
-        <td>{{.CommitCount}}</td>
-        <td>
-        {{range $yearWeek, $count := .ContributionTimeline}}
-                {{$yearWeek}}: {{$count}}<br>
-        {{end}}
-        </td>
-        <td>{{.LinesAdded}}</td>
-        <td>{{.LinesRemoved}}</td>
-        <td>{{.LinesEdited}}</td>
-</tr>
-{{end}}
+{{range $branchName, $branchReport := .}}
+<h3> Branch: <span class="badge text-bg-warning">{{$branchName}}</span></h3>
+
+<table class="table table-dark table-striped">
+	<thead>
+		<tr>
+			<th class="fixed-width">Email</th>
+			<th class="fixed-width">Commit Count</th>
+			<th class="fixed-width">Contribution Timeline</th>
+			<th>Lines Added</th>
+			<th>Lines Removed</th>
+			<th>Lines Edited</th>
+		</tr>
+	</thead>
+	<tbody>
+		{{range sortContributions .Contributions}}
+		<tr>
+			<td>{{.Email}}</td>
+			<td>{{.CommitCount}}</td>
+			<td>
+				{{range $yearWeek, $count := .ContributionTimeline}}
+					{{$yearWeek}}: {{$count}}<br>
+				{{end}}
+			</td>
+			<td>{{.LinesAdded}}</td>
+			<td>{{.LinesRemoved}}</td>
+			<td>{{.LinesEdited}}</td>
+		</tr>
+		{{end}}
+	</tbody>
 </table>
 {{end}}
+</div>
 
+<script>
+const themeToggle = document.getElementById('themeToggle');
+let currentTheme = 'dark';
+
+themeToggle.addEventListener('click', () => {
+	if (currentTheme === 'dark') {
+		document.documentElement.setAttribute('data-bs-theme', 'light');
+		document.querySelectorAll('table').forEach(table => {
+			table.classList.remove('table-dark');
+		});
+		themeToggle.textContent = 'Dark Theme';
+		currentTheme = 'light';
+	} else {
+		document.documentElement.setAttribute('data-bs-theme', 'dark');
+		document.querySelectorAll('table').forEach(table => {
+			table.classList.add('table-dark');
+		});
+		themeToggle.textContent = 'Light Theme';
+		currentTheme = 'dark';
+	}
+});
+
+</script>
 </body>
 </html>
 `
