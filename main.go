@@ -91,7 +91,7 @@ func main() {
 		log.Fatalf("Error generating HTML report: %v", err)
 	}
 
-	filename := fmt.Sprintf("report_%s_%s.html", repoName, time.Now().Format("2006-01-02_1504"))
+	filename := fmt.Sprintf("report_%s_%s.html", repoName, time.Now().Format("2006-01-02_150405"))
 	err = os.WriteFile(filename, []byte(htmlReport), 0644)
 	if err != nil {
 		log.Fatalf("Error writing HTML report to file: %v", err)
