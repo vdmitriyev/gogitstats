@@ -20,6 +20,8 @@ CLI parameters:
 * `--mainbranch` - Name of the 'main' branch for merge-base (default "main")
 * `--groupby` -  Group git log date by 'week' or 'month' (default "month")
 
+**NOTE:** In order to fetch history of remote git branches, they must be pulled into local repository.
+
 ## Run with Go
 
 1. Install Go:
