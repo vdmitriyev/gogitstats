@@ -75,7 +75,12 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error cloning repository: %v", err)
 		}
+
 		*repoPath = newRepoPath
+
+		if err := checkoutRemoteBranches(*repoPath); err != nil {
+			log.Fatalf("Error checking out all branched: %s", err)
+		}
 	}
 
 	if _, err := os.Stat(*repoPath); os.IsNotExist(err) {
@@ -170,6 +175,61 @@ func cloneRepository(repoURL, destDir string) (string, error) {
 	}
 
 	return localRepoPath, nil
+}
+
+// checkoutRemoteBranches checks out all remote branches of a Git repository located at repoPath.
+//
+// It executes the following steps:
+//  1. Retrieves the list of remote branches using `git branch -r`.
+//  2. Iterates through each remote branch, skipping empty branches and symbolic HEAD references.
+//  3. If a branch starts with "origin/", it extracts the branch name and attempts to check it out locally
+//     using `git checkout -b <local_branch_name> <remote_branch_name>`.
+//  4. If the checkout fails and the error message does not indicate that the branch already exists,
+//     it returns an error.
+//
+// Parameters:
+//   - repoPath: The path to the Git repository.
+//
+// Returns:
+//   - nil if all remote branches are successfully checked out or already exist.
+//   - An error if any other error occurs during the process.
+func checkoutRemoteBranches(repoPath string) error {
+
+	log.Printf("Checking remote branches")
+
+	cmd := exec.Command("git", "branch", "-r")
+	cmd.Dir = repoPath
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to get remote branches: %w, output: %s", err, output)
+	}
+
+	branches := strings.Split(string(output), "\n")
+
+	for _, branch := range branches {
+		branch = strings.TrimSpace(branch)
+		if branch == "" || strings.Contains(branch, "HEAD ->") { // Skip HEAD -> branches
+			continue
+		}
+
+		if strings.HasPrefix(branch, "origin/") {
+			branchName := strings.TrimPrefix(branch, "origin/")
+			branchName = strings.TrimSpace(branchName)
+
+			checkoutCmd := exec.Command("git", "checkout", "-b", branchName, branch)
+			checkoutCmd.Dir = repoPath
+
+			var stderr bytes.Buffer
+			checkoutCmd.Stderr = &stderr
+
+			err := checkoutCmd.Run()
+			if err != nil && !strings.Contains(stderr.String(), "already exists") {
+				return fmt.Errorf("failed to checkout branch %s: %w, stderr: %s", branchName, err, stderr.String())
+			}
+		}
+	}
+
+	return nil
 }
 
 func analyzeGitHistoryByBranch(repoPath string, fileFilter string) (map[string]*BranchReport, error) {

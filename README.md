@@ -9,7 +9,7 @@ The report includes:
 -   Total lines removed
 -   Total lines edited
 
-The utility processes each branch in the repository and provides a separate table in the report for each branch. 
+The utility processes each branch in the repository and provides a summary report for each git branch.
 The path to the Git repository is provided as a command-line argument. 
 The output is saved as HTML file named `report_REPO-NAME_DATE_TIME.html`.
 
@@ -20,7 +20,7 @@ CLI parameters:
 * `--mainbranch` - Name of the 'main' branch for merge-base (default "main")
 * `--groupby` -  Group git log date by 'week' or 'month' (default "month")
 
-**NOTE:** In order to fetch history of remote git branches, they must be pulled into local repository.
+**NOTE:** In order to fetch history of remote git branches, they must be pulled into local repository. This should be done automatically by the utility, if URL is used.
 
 ## Run with Go
 
