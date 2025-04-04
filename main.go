@@ -22,6 +22,9 @@ var defaultGroupByForLogDate string = "month"
 
 const REPOSITORIES_DIRECTORY = ".repositories"
 
+var version string = "0.1.0"
+var build string = "0.0.0" // do not remove or modify
+
 type UserContribution struct {
 	Email                string
 	CommitCount          int
@@ -62,7 +65,21 @@ func main() {
 	fileFilter := flag.String("filter", "", "Filter for file types (e.g., go, py, etc.). Optional")
 	optoinMainBranch := flag.String("mainbranch", defaultMainBranchName, "Name of the 'main' branch for merge-base")
 	optionGroupByForLogDate := flag.String("groupby", defaultGroupByForLogDate, "Group git log date by 'week' or 'month'")
+	versionFull := flag.Bool("version", false, "Prints full version of CLI")
+	versionShort := flag.Bool("version-short", false, "Prints version of CLI")
+
 	flag.Parse()
+
+	if *versionShort {
+		fmt.Println(version)
+		return
+	}
+
+	if *versionFull {
+		fmt.Println("Version: ", version)
+		fmt.Println("Build: ", build)
+		return
+	}
 
 	if *repoPath == "" {
 		log.Fatal("Please provide the path to the git repository using `--repository`")
