@@ -22,7 +22,7 @@ var defaultGroupByForLogDate string = "month"
 
 const REPOSITORIES_DIRECTORY = ".repositories"
 
-var version string = "0.1.0"
+var version string = "0.1.1"
 var build string = "0.0.0" // do not remove or modify
 
 type UserContribution struct {
