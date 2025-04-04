@@ -2,10 +2,12 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"flag"
 	"fmt"
 	"html/template"
 	"log"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,6 +19,8 @@ import (
 
 var defaultMainBranchName string = "main"
 var defaultGroupByForLogDate string = "month"
+
+const REPOSITORIES_DIRECTORY = ".repositories"
 
 type UserContribution struct {
 	Email                string
@@ -50,14 +54,28 @@ func main() {
 	log.SetFlags(0)
 	log.SetOutput(new(customLogWriter))
 
-	repoPath := flag.String("repo", "", "Path to the git repository")
+	if err := isGitInstalled(); err != nil {
+		log.Fatalf("Error: %s", err)
+	}
+
+	repoPath := flag.String("repository", "", "Path to the git repository (directory or URL)")
 	fileFilter := flag.String("filter", "", "Filter for file types (e.g., go, py, etc.). Optional")
 	optoinMainBranch := flag.String("mainbranch", defaultMainBranchName, "Name of the 'main' branch for merge-base")
 	optionGroupByForLogDate := flag.String("groupby", defaultGroupByForLogDate, "Group git log date by 'week' or 'month'")
 	flag.Parse()
 
 	if *repoPath == "" {
-		log.Fatal("Please provide the path to the git repository using --repo")
+		log.Fatal("Please provide the path to the git repository using `--repository`")
+	}
+
+	u, err := url.Parse(*repoPath)
+	if err == nil && (u.Scheme == "http" || u.Scheme == "https" || u.Scheme == "git" || u.Scheme == "ssh") {
+		log.Println("URL found. Cloning repository: ", *repoPath)
+		newRepoPath, err := cloneRepository(*repoPath, REPOSITORIES_DIRECTORY)
+		if err != nil {
+			log.Fatalf("Error cloning repository: %v", err)
+		}
+		*repoPath = newRepoPath
 	}
 
 	if _, err := os.Stat(*repoPath); os.IsNotExist(err) {
@@ -98,6 +116,60 @@ func main() {
 	}
 
 	log.Printf("HTML report generated: %s\n", filename)
+}
+
+// isGitInstalled checks if Git is installed and accessible in the system's PATH.
+//
+// It uses exec.LookPath to search for the "git" executable.
+//
+// Returns:
+//   - nil if Git is found.
+//   - An error if Git is not installed or not found in the PATH.
+func isGitInstalled() error {
+	_, err := exec.LookPath("git")
+	if err != nil {
+		return errors.New("git is not installed or not found in PATH")
+	}
+	return nil
+}
+
+// cloneRepository clones a Git repository from the given URL to the specified destination directory.
+//
+// It first checks if the destination directory exists. If not, it creates it.
+// Then, it derives the repository name from the URL and constructs the local repository path.
+// If the local repository does not exist, it executes the "git clone" command.
+// If the local repository already exists, it skips the cloning process.
+//
+// Parameters:
+//   - repoURL: The URL of the Git repository to clone.
+//   - destDir: The destination directory where the repository should be cloned.
+//
+// Returns:
+//   - The local path to the cloned repository.
+//   - An error, if any, occurred during the cloning process.
+func cloneRepository(repoURL, destDir string) (string, error) {
+
+	if _, err := os.Stat(destDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(destDir, 0755); err != nil {
+			return "", fmt.Errorf("failed to create directory %s: %w", destDir, err)
+		}
+	}
+
+	repoName := filepath.Base(repoURL)
+	localRepoPath := filepath.Join(destDir, repoName)
+
+	if _, err := os.Stat(localRepoPath); os.IsNotExist(err) {
+		cmd := exec.Command("git", "clone", repoURL, localRepoPath)
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			return "", fmt.Errorf("failed to clone repository: %s, output: %s", err, output)
+		}
+		log.Printf("Repository cloned to: %s", localRepoPath)
+	} else {
+		log.Printf("Repository already exists at: %s", localRepoPath)
+	}
+
+	return localRepoPath, nil
 }
 
 func analyzeGitHistoryByBranch(repoPath string, fileFilter string) (map[string]*BranchReport, error) {

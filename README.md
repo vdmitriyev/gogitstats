@@ -15,7 +15,7 @@ The output is saved as HTML file named `report_REPO-NAME_DATE_TIME.html`.
 
 CLI parameters:
 
-* `--repo` - Path to the git repository
+* `--repository` - Path to the git repository (directory or URL)
 * `--filter` - Filter for file types (e.g., go, py, etc.). Optional
 * `--mainbranch` - Name of the 'main' branch for merge-base (default "main")
 * `--groupby` -  Group git log date by 'week' or 'month' (default "month")
@@ -34,17 +34,17 @@ CLI parameters:
 
 ## Usage Example
 
-To generate the HTML report, run the executable with the `--repo` flag specifying the path to your Git repository:
+To generate the HTML report, run the executable with the `--repository` flag specifying the path to your Git repository:
 
 ```bash
-go run . --repo /path/to/your/git/repository
+go run . --repository /path/to/your/git/repository
 ```
 
 ## Report Example
 
 Run options:
 ```
-go run . --repo ../sourcecodesnippets --mainbranch master --filter *.yml
+go run . --repositorysitory ../sourcecodesnippets --mainbranch master --filter *.yml
 ```
 
 Screenshot:
