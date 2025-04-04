@@ -43,6 +43,8 @@ Install
 go install github.com/vdmitriyev/gogitstats@latest
 ```
 
+**NOTE:** If utility has been installed as CLI, then use `gogitstats` instead of `go run .`
+
 ## Usage Example
 
 To generate the HTML report, run the executable with the `--repository` flag specifying the path to your Git repository:
