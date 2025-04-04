@@ -25,7 +25,7 @@ Here are essential CLI parameters of the utility:
 
 **NOTE:** In order to fetch history of remote git branches, they must be pulled into local repository. This should be done automatically by the utility, if URL is used.
 
-## Run with Go
+## Install: Run with Go
 
 1. Install Go:
     - If you don't have Go installed, download and install it from [golang.org](https://golang.org/dl/)
@@ -34,6 +34,14 @@ Here are essential CLI parameters of the utility:
     ```bash
     go run . --help
     ```
+## Install: Run as CLI
+
+**Dependencies:** `go` must be installed first. Latest version can be obtained and installed from [https://go.dev/doc/install](https://go.dev/doc/install).
+
+Install
+```
+go install github.com/vdmitriyev/gogitstats@latest
+```
 
 ## Usage Example
 
