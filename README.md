@@ -13,12 +13,15 @@ The utility processes each branch in the repository and provides a summary repor
 The path to the Git repository is provided as a command-line argument. 
 The output is saved as HTML file named `report_REPO-NAME_DATE_TIME.html`.
 
-CLI parameters:
+### CLI Parameters
+
+Here are essential CLI parameters of the utility:
 
 * `--repository` - Path to the git repository (directory or URL)
 * `--filter` - Filter for file types (e.g., go, py, etc.). Optional
 * `--mainbranch` - Name of the 'main' branch for merge-base (default "main")
 * `--groupby` -  Group git log date by 'week' or 'month' (default "month")
+* `--help` - Show help message 
 
 **NOTE:** In order to fetch history of remote git branches, they must be pulled into local repository. This should be done automatically by the utility, if URL is used.
 
