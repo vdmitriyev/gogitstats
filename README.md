@@ -66,7 +66,7 @@ gogitstats --repository /path/to/your/git/repository
 
 Generate a HTML report using `master` as a main branch (option `--mainbranch`) and consider only YAML files changes (option `--filter`)
 ```
-gogitstats . --repositorysitory ../sourcecodesnippets --mainbranch master --filter *.yml
+gogitstats --repository ../sourcecodesnippets --mainbranch master --filter *.yml
 ```
 
 ### Screenshots of an Example Report 
