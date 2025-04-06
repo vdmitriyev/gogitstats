@@ -25,15 +25,6 @@ Here are essential CLI parameters of the utility:
 
 **NOTE:** In order to fetch history of remote git branches, they must be pulled into local repository. This should be done automatically by the utility, if URL is used.
 
-## Install: Run with Go
-
-1. Install Go:
-    - If you don't have Go installed, download and install it from [golang.org](https://golang.org/dl/)
-1. Clone the repository (or copy the code):
-1. Run the executable:
-    ```bash
-    go run . --help
-    ```
 ## Install: Run as CLI
 
 **Dependencies:** `go` must be installed first. Latest version can be obtained and installed from [https://go.dev/doc/install](https://go.dev/doc/install).
@@ -45,22 +36,40 @@ go install github.com/vdmitriyev/gogitstats@latest
 
 **NOTE:** If utility has been installed as CLI, then use `gogitstats` instead of `go run .`
 
-## Usage Example
+<details>
 
-To generate the HTML report, run the executable with the `--repository` flag specifying the path to your Git repository:
+<summary>Install: Run with Go</summary>
+
+## Install: Run with Go
+
+1. Install Go:
+    - If you don't have Go installed, download and install it from [golang.org](https://golang.org/dl/)
+1. Clone the repository (or copy the code):
+1. Run the executable:
+    ```bash
+    go run . --help
+    ```
+1. Generate a HTML report
+    ```
+    go run . --repository /path/to/your/git/repository
+    ```
+
+</details>
+
+## Usage Examples
+
+Generate a HTML report with the option `--repository`, which specifies the directory path to your Git repository or URL:
 
 ```bash
-go run . --repository /path/to/your/git/repository
+gogitstats --repository /path/to/your/git/repository
 ```
 
-## Report Example
-
-Run options:
+Generate a HTML report using `master` as a main branch (option `--mainbranch`) and consider only YAML files changes (option `--filter`)
 ```
-go run . --repositorysitory ../sourcecodesnippets --mainbranch master --filter *.yml
+gogitstats . --repositorysitory ../sourcecodesnippets --mainbranch master --filter *.yml
 ```
 
-Screenshot:
+### Screenshots of an Example Report 
 
 ![alt text](docs/report-example-ui.png)
 
