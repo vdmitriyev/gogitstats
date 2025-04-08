@@ -82,7 +82,7 @@ func main() {
 	}
 
 	if *repoPath == "" {
-		log.Fatal("Please provide the path to the git repository using `--repository`")
+		log.Fatal("Please provide path to the git repository with option `--repository`")
 	}
 
 	u, err := url.Parse(*repoPath)

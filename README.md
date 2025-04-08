@@ -31,7 +31,7 @@ Here are essential CLI parameters of the utility:
 
 Install
 ```
-go install github.com/vdmitriyev/gogitstats@latest
+go install -a github.com/vdmitriyev/gogitstats@latest
 ```
 
 **NOTE:** If utility has been installed as CLI, then use `gogitstats` instead of `go run .`
